@@ -8,8 +8,16 @@ class DynamicForm<T> extends StatefulWidget {
   final bool cancelButton;
   final Function(Map<String, dynamic> values)? onSubmit;
   final VoidCallback? onCancel;
+  final bool isLoading;
 
-  const DynamicForm({super.key, required this.fields, this.cancelButton = true, this.onSubmit, this.onCancel});
+  const DynamicForm({
+    super.key,
+    required this.fields,
+    this.cancelButton = true,
+    this.onSubmit,
+    this.onCancel,
+    this.isLoading = false,
+  });
 
   @override
   State<DynamicForm> createState() => _DynamicFormState();
@@ -59,20 +67,23 @@ class _DynamicFormState<T> extends State<DynamicForm> {
                 children: [
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
-                    onPressed: () => _submit(),
-                    icon: const Icon(Icons.save),
-                    label: const Text('Guardar'),
+                    onPressed: widget.isLoading ? null : () => _submit(),
+                    icon: widget.isLoading ? null : const Icon(Icons.save),
+                    label: widget.isLoading ? CircularProgressIndicator() : Text('Guardar'),
                   ),
                   const SizedBox(width: 16),
                   Visibility(
                     visible: widget.cancelButton,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.tertiary),
-                      onPressed: () {
-                        _formKey.currentState!.reset();
-                        _setInitial();
-                        widget.onCancel!();
-                      },
+                      onPressed:
+                          widget.isLoading
+                              ? null
+                              : () {
+                                _formKey.currentState!.reset();
+                                _setInitial();
+                                widget.onCancel!();
+                              },
                       icon: const Icon(Icons.cancel),
                       label: const Text('Cancelar'),
                     ),
@@ -555,12 +566,9 @@ class _DropdownField extends StatelessWidget {
               : null,
       items:
           items.map((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
-            );
+            return DropdownMenuItem<String>(value: value, child: Text(value));
           }).toList(),
-      decoration: InputDecoration(hintText: label, labelText: label, hintStyle: Theme.of(context).textTheme.bodyMedium),
+      decoration: InputDecoration(hintText: label, labelText: label),
       style: Theme.of(context).textTheme.bodyMedium,
     );
   }
