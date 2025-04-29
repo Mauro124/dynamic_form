@@ -73,7 +73,7 @@ extension StringExtension on String {
   bool get isPDF => hasMatch(r'^.+\.pdf$');
 
   /// Check if string is a phone number
-  bool get isPhoneNumber => hasMatch(r'^[0-9\-\+\s\(\)]{10,20}$');
+  bool get isPhoneNumber => hasMatch(r'^\+?[0-9]$');
 
   bool get isCreditCard => hasMatch(r'^[0-9]{13,16}$');
 

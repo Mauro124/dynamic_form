@@ -36,6 +36,10 @@ class _DynamicFormState<T> extends State<DynamicForm> {
   void _setInitial() {
     _controllers =
         widget.fields.map((e) {
+          if (e.initialValue is bool || e.initialValue is int || e.initialValue is double || e.initialValue is num) {
+            return TextEditingController(text: e.initialValue.toString());
+          }
+
           return TextEditingController(text: e.initialValue);
         }).toList();
   }
@@ -52,6 +56,7 @@ class _DynamicFormState<T> extends State<DynamicForm> {
             children: [
               ...widget.fields.map((e) {
                 final index = widget.fields.indexOf(e);
+
                 return SizedBox(
                   width:
                       e.size == FormFieldSize.half
@@ -59,6 +64,7 @@ class _DynamicFormState<T> extends State<DynamicForm> {
                           : e.size == FormFieldSize.third
                           ? constraints.maxWidth / 3 - 16
                           : constraints.maxWidth - 16,
+
                   child: fieldByType(index, e),
                 );
               }),
@@ -77,12 +83,10 @@ class _DynamicFormState<T> extends State<DynamicForm> {
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.tertiary),
                       onPressed:
-                          widget.isLoading
+                          widget.isLoading || widget.onCancel == null
                               ? null
                               : () {
-                                _formKey.currentState!.reset();
-                                _setInitial();
-                                widget.onCancel!();
+                                widget.onCancel!.call();
                               },
                       icon: const Icon(Icons.cancel),
                       label: const Text('Cancelar'),
@@ -106,6 +110,7 @@ class _DynamicFormState<T> extends State<DynamicForm> {
           label: field.label,
           isRequired: field.isRequired,
           validator: field.validator,
+          isEnabled: field.isEnabled,
         );
       case DynamicFormFieldType.phone:
         return _PhoneField(
@@ -113,6 +118,7 @@ class _DynamicFormState<T> extends State<DynamicForm> {
           label: field.label,
           isRequired: field.isRequired,
           validator: field.validator,
+          isEnabled: field.isEnabled,
         );
       case DynamicFormFieldType.password:
         return _PasswordField(
@@ -120,6 +126,7 @@ class _DynamicFormState<T> extends State<DynamicForm> {
           label: field.label,
           isRequired: field.isRequired,
           validator: field.validator,
+          isEnabled: field.isEnabled,
         );
       case DynamicFormFieldType.email:
         return _EmailField(
@@ -127,6 +134,7 @@ class _DynamicFormState<T> extends State<DynamicForm> {
           label: field.label,
           isRequired: field.isRequired,
           validator: field.validator,
+          isEnabled: field.isEnabled,
         );
       case DynamicFormFieldType.date:
         return _DateField(
@@ -134,6 +142,9 @@ class _DynamicFormState<T> extends State<DynamicForm> {
           label: field.label,
           isRequired: field.isRequired,
           validator: field.validator,
+          minDate: field.minDate,
+          maxDate: field.maxDate,
+          isEnabled: field.isEnabled,
         );
       case DynamicFormFieldType.dropdown:
         return _DropdownField(
@@ -142,6 +153,7 @@ class _DynamicFormState<T> extends State<DynamicForm> {
           items: field.items as List<String>,
           isRequired: field.isRequired,
           validator: field.validator,
+          isEnabled: field.isEnabled,
           onChanged: (value) {
             field.onChanged!(value);
           },
@@ -181,6 +193,7 @@ class _DynamicFormState<T> extends State<DynamicForm> {
           label: field.label,
           isRequired: field.isRequired,
           validator: field.validator,
+          isEnabled: field.isEnabled,
         );
       case DynamicFormFieldType.currency:
         return _CurrencyField(
@@ -188,6 +201,29 @@ class _DynamicFormState<T> extends State<DynamicForm> {
           label: field.label,
           isRequired: field.isRequired,
           validator: field.validator,
+          isEnabled: field.isEnabled,
+        );
+      case DynamicFormFieldType.checkbox:
+        return SizedBox(
+          height: field.style?.height ?? 40,
+          child: CheckboxListTile(
+            title: Text(field.label),
+            value: field.initialValue ?? false,
+            enableFeedback: true,
+            controlAffinity: ListTileControlAffinity.leading,
+            contentPadding: EdgeInsets.zero,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(field.style?.borderRadius ?? 0),
+              side: BorderSide(color: field.style?.border?.color ?? Colors.transparent),
+            ),
+            dense: false,
+            visualDensity: VisualDensity.compact,
+            onChanged: (value) {
+              setState(() {
+                field.onChanged!(value);
+              });
+            },
+          ),
         );
       case DynamicFormFieldType.custom:
         return field.childBuilder!(_controllers[index].text);
@@ -217,12 +253,20 @@ class _TextField extends StatelessWidget {
   final String label;
   final FormFieldValidator? validator;
   final bool isRequired;
+  final bool? isEnabled;
 
-  const _TextField({required this.controller, required this.label, this.validator, this.isRequired = false});
+  const _TextField({
+    required this.controller,
+    required this.label,
+    this.validator,
+    this.isRequired = false,
+    this.isEnabled,
+  });
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      enabled: isEnabled,
       controller: controller,
       decoration: InputDecoration(hintText: label, labelText: label),
       validator:
@@ -244,14 +288,22 @@ class _NumberField extends StatelessWidget {
   final String label;
   final FormFieldValidator? validator;
   final bool isRequired;
+  final bool? isEnabled;
 
-  const _NumberField({required this.controller, required this.label, this.validator, this.isRequired = false});
+  const _NumberField({
+    required this.controller,
+    required this.label,
+    this.validator,
+    this.isRequired = false,
+    this.isEnabled,
+  });
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      enabled: isEnabled,
       controller: controller,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
       decoration: InputDecoration(hintText: label, labelText: label),
       validator:
           isRequired
@@ -274,12 +326,20 @@ class _CurrencyField extends StatelessWidget {
   final String label;
   final FormFieldValidator? validator;
   final bool isRequired;
+  final bool? isEnabled;
 
-  const _CurrencyField({required this.controller, required this.label, this.validator, this.isRequired = false});
+  const _CurrencyField({
+    required this.controller,
+    required this.label,
+    this.validator,
+    this.isRequired = false,
+    this.isEnabled,
+  });
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      enabled: isEnabled,
       controller: controller,
       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
       decoration: InputDecoration(hintText: label, labelText: label, prefix: Text('\$')),
@@ -308,12 +368,20 @@ class _PhoneField extends StatelessWidget {
   final String label;
   final FormFieldValidator? validator;
   final bool isRequired;
+  final bool? isEnabled;
 
-  const _PhoneField({required this.controller, required this.label, this.validator, this.isRequired = false});
+  const _PhoneField({
+    required this.controller,
+    required this.label,
+    this.validator,
+    this.isRequired = false,
+    this.isEnabled,
+  });
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      enabled: isEnabled,
       controller: controller,
       decoration: InputDecoration(hintText: label, labelText: label),
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -342,8 +410,15 @@ class _PasswordField extends StatefulWidget {
   final String label;
   final FormFieldValidator? validator;
   final bool isRequired;
+  final bool? isEnabled;
 
-  const _PasswordField({required this.controller, required this.label, this.validator, this.isRequired = false});
+  const _PasswordField({
+    required this.controller,
+    required this.label,
+    this.validator,
+    this.isRequired = false,
+    this.isEnabled,
+  });
 
   @override
   State<_PasswordField> createState() => __PasswordFieldState();
@@ -355,6 +430,7 @@ class __PasswordFieldState extends State<_PasswordField> {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      enabled: widget.isEnabled,
       controller: widget.controller,
       decoration: InputDecoration(
         hintText: widget.label,
@@ -387,12 +463,20 @@ class _EmailField extends StatelessWidget {
   final String label;
   final FormFieldValidator? validator;
   final bool isRequired;
+  final bool? isEnabled;
 
-  const _EmailField({required this.controller, required this.label, this.validator, this.isRequired = false});
+  const _EmailField({
+    required this.controller,
+    required this.label,
+    this.validator,
+    this.isRequired = false,
+    this.isEnabled,
+  });
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      enabled: isEnabled,
       controller: controller,
       decoration: InputDecoration(hintText: label, labelText: label),
       validator:
@@ -413,10 +497,21 @@ class _EmailField extends StatelessWidget {
 class _DateField extends StatefulWidget {
   final TextEditingController controller;
   final String label;
-  final FormFieldValidator? validator;
   final bool isRequired;
+  final FormFieldValidator? validator;
+  final DateTime? minDate;
+  final DateTime? maxDate;
+  final bool isEnabled;
 
-  const _DateField({required this.controller, required this.label, this.validator, this.isRequired = false});
+  const _DateField({
+    required this.controller,
+    required this.label,
+    required this.isEnabled,
+    this.validator,
+    this.isRequired = false,
+    this.minDate,
+    this.maxDate,
+  });
 
   @override
   State<_DateField> createState() => _DateFieldState();
@@ -438,31 +533,41 @@ class _DateFieldState extends State<_DateField> {
     return Row(
       children: [
         IconButton(
+          color: Theme.of(context).colorScheme.primary,
+          iconSize: 18,
           icon: Icon(Icons.calendar_today),
-          onPressed: () async {
-            final DateTime? date = await showDatePicker(
-              context: context,
-              initialDate: DateTime.now(),
-              firstDate: DateTime.now(),
-              lastDate: DateTime.now().add(Duration(days: 365)),
-            );
-            if (date != null) {
-              widget.controller.text = date.toString();
-              setState(() {
-                _date = date;
-              });
-            }
-          },
+          onPressed:
+              widget.isEnabled
+                  ? () async {
+                    final DateTime? date = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: widget.minDate ?? DateTime.now(),
+                      lastDate: widget.maxDate ?? DateTime.now().add(Duration(days: 365 * 5)),
+                      confirmText: 'Seleccionar',
+                      cancelText: 'Cancelar',
+                    );
+                    if (date != null) {
+                      widget.controller.text = date.toString();
+                      setState(() {
+                        _date = date;
+                      });
+                    }
+                  }
+                  : null,
         ),
         SizedBox(width: 12),
         Expanded(
           child: InputDatePickerFormField(
-            firstDate: DateTime.now(),
-            lastDate: DateTime.now().add(Duration(days: 365)),
-            onDateSubmitted: (DateTime value) {
-              widget.controller.text = value.toString();
-            },
             initialDate: _date ?? DateTime.now(),
+            firstDate: widget.minDate ?? DateTime.now(),
+            lastDate: widget.maxDate ?? DateTime.now().add(Duration(days: 365 * 5)),
+            onDateSubmitted:
+                widget.isEnabled
+                    ? (DateTime value) {
+                      widget.controller.text = value.toString();
+                    }
+                    : null,
             fieldHintText: widget.label,
             fieldLabelText: widget.label,
           ),
@@ -536,6 +641,7 @@ class _DropdownField extends StatelessWidget {
   final FormFieldValidator? validator;
   final bool isRequired;
   final Function(String)? onChanged;
+  final bool isEnabled;
 
   const _DropdownField({
     required this.controller,
@@ -544,16 +650,20 @@ class _DropdownField extends StatelessWidget {
     this.validator,
     this.isRequired = false,
     this.onChanged,
+    this.isEnabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String?>(
       value: controller.text == '' ? null : controller.text,
-      onChanged: (String? value) {
-        controller.text = value!;
-        onChanged!(value);
-      },
+      onChanged:
+          isEnabled
+              ? (String? value) {
+                controller.text = value!;
+                onChanged!(value);
+              }
+              : null,
       validator:
           isRequired
               ? validator ??
@@ -666,10 +776,13 @@ class _TextAreaField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(hintText: label, labelText: label),
-      maxLines: 5,
+    return SizedBox(
+      height: 80,
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(hintText: label, labelText: label),
+        maxLines: 5,
+      ),
     );
   }
 }

@@ -29,6 +29,26 @@ enum DynamicFormFieldType {
 
 enum FormFieldSize { full, half, third }
 
+class DynamicFormFieldStyle {
+  final Color? backgroundColor;
+  final Color? textColor;
+  final Color? selectedColor;
+  final Color? selectedTextColor;
+  final BorderSide? border;
+  final double? borderRadius;
+  final double? height;
+
+  const DynamicFormFieldStyle({
+    this.backgroundColor,
+    this.textColor,
+    this.selectedColor,
+    this.selectedTextColor,
+    this.border,
+    this.borderRadius,
+    this.height,
+  });
+}
+
 class DynamicFormField {
   final String name;
   final String label;
@@ -40,6 +60,10 @@ class DynamicFormField {
   final FormFieldSize size;
   final Widget Function(dynamic value)? childBuilder;
   final Function(dynamic value)? onChanged;
+  final DynamicFormFieldStyle? style;
+  final DateTime? minDate;
+  final DateTime? maxDate;
+  final bool isEnabled;
 
   DynamicFormField({
     required this.name,
@@ -52,6 +76,10 @@ class DynamicFormField {
     this.size = FormFieldSize.full,
     this.childBuilder,
     this.onChanged,
+    this.style,
+    this.minDate,
+    this.maxDate,
+    this.isEnabled = true,
   }) {
     if ((type == DynamicFormFieldType.dropdown || type == DynamicFormFieldType.radio) &&
         (items == null || items!.isEmpty)) {
