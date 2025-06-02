@@ -64,6 +64,7 @@ class DynamicFormField {
   final DateTime? minDate;
   final DateTime? maxDate;
   final bool isEnabled;
+  final bool isHidden;
 
   DynamicFormField({
     required this.name,
@@ -80,6 +81,7 @@ class DynamicFormField {
     this.minDate,
     this.maxDate,
     this.isEnabled = true,
+    this.isHidden = false,
   }) {
     if ((type == DynamicFormFieldType.dropdown || type == DynamicFormFieldType.radio) &&
         (items == null || items!.isEmpty)) {

@@ -103,6 +103,10 @@ class _DynamicFormState<T> extends State<DynamicForm> {
   }
 
   Widget fieldByType(int index, DynamicFormField field) {
+    if (field.isHidden) {
+      return const SizedBox();
+    }
+
     switch (field.type) {
       case DynamicFormFieldType.text:
         return _TextField(
@@ -218,11 +222,14 @@ class _DynamicFormState<T> extends State<DynamicForm> {
             ),
             dense: false,
             visualDensity: VisualDensity.compact,
-            onChanged: (value) {
-              setState(() {
-                field.onChanged!(value);
-              });
-            },
+            onChanged:
+                field.isEnabled
+                    ? (value) {
+                      setState(() {
+                        field.onChanged!(value);
+                      });
+                    }
+                    : null,
           ),
         );
       case DynamicFormFieldType.custom:
