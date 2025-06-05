@@ -5,14 +5,15 @@ class DynamicPasswordField extends StatefulWidget {
   final String label;
   final FormFieldValidator? validator;
   final bool isRequired;
-  final bool? isEnabled;
+  final bool isEnabled;
 
   const DynamicPasswordField({
+    super.key,
     required this.controller,
     required this.label,
     this.validator,
     this.isRequired = false,
-    this.isEnabled,
+    this.isEnabled = true,
   });
 
   @override

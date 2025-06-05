@@ -5,7 +5,7 @@ class DynamicEmailField extends StatelessWidget {
   final String label;
   final FormFieldValidator? validator;
   final bool isRequired;
-  final bool? isEnabled;
+  final bool isEnabled;
 
   const DynamicEmailField({
     super.key,
@@ -13,7 +13,7 @@ class DynamicEmailField extends StatelessWidget {
     required this.label,
     this.validator,
     this.isRequired = false,
-    this.isEnabled,
+    this.isEnabled = true,
   });
 
   @override

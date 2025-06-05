@@ -5,7 +5,7 @@ class DynamicTextField extends StatelessWidget {
   final String label;
   final FormFieldValidator? validator;
   final bool isRequired;
-  final bool? isEnabled;
+  final bool isEnabled;
 
   const DynamicTextField({
     super.key,
@@ -13,7 +13,7 @@ class DynamicTextField extends StatelessWidget {
     required this.label,
     this.validator,
     this.isRequired = false,
-    this.isEnabled,
+    this.isEnabled = true,
   });
 
   @override

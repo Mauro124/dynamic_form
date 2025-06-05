@@ -13,7 +13,7 @@ class DynamicDateField extends StatefulWidget {
     super.key,
     required this.controller,
     required this.label,
-    required this.isEnabled,
+    this.isEnabled = true,
     this.validator,
     this.isRequired = false,
     this.minDate,
